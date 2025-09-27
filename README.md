@@ -88,12 +88,17 @@ SEQ001,SAMPLE_A,/path/to/sampleA_R1.fq.gz,/path/to/sampleA_R2.fq.gz
 SEQ002,SAMPLE_B,/path/to/sampleB_R1.fq.gz,/path/to/sampleB_R2.fq.gz
 ```
 
-### SLURM Script Snippet
+### SLURM Script Snippet `*** WARNING Please Read ***`
+After fastp finishes, remove raw FASTQ files to save space
+If you need to keep raw FASTQ, comment in `submit_fastp_array.sh` file in lines:
 ```bash
-# After fastp finishes, remove raw FASTQ files to save space
-# If you need to keep raw FASTQ, comment out the following lines:
-rm "$IN1"
-rm "$IN2"
+rm "$IN1" #This line will remove raw FASTQ
+rm "$IN2" #This line will remove raw FASTQ
+
+# Comment to
+
+#rm "$IN1" #comment and keep raw FASTQ
+#rm "$IN2" #comment and keep raw FASTQ
 ```
 
 ### SLURM Script Example
