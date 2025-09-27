@@ -6,6 +6,57 @@ This repository contains high-performance computing (HPC) pipelines for processi
 2. **Alignment and post-processing using `Bowtie2` and `Picard`**
 3. **Variant calling using `GATK HaplotypeCaller`**
 
+## Workflow Overview
+
+The following diagram shows the full NGS pipeline workflow:
+```
+                 ┌───────────────┐
+                 │   Raw FASTQ   │
+                 └──────┬────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │   fastp QC    │
+                 │ (trim + QC)   │
+                 └──────┬────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │   Trimmed     │
+                 │   FASTQ       │
+                 └──────┬────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │  Bowtie2      │
+                 │  Alignment    │
+                 └──────┬────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │  Picard       │
+                 │  Add RG +     │
+                 │  FixMate +    │
+                 │  MarkDuplicates │
+                 └──────┬────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │  Final BAM    │
+                 └──────┬────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │  GATK         │
+                 │  HaplotypeCaller │
+                 └──────┬────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │  GVCF files   │
+                 └───────────────┘
+```
+
 ---
 ## 0. Prepare Bowtie2 Index
 
