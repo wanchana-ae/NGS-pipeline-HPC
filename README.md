@@ -87,6 +87,15 @@ sequencing_id,sample_id,read1.fastq.gz,read2.fastq.gz
 SEQ001,SAMPLE_A,/path/to/sampleA_R1.fq.gz,/path/to/sampleA_R2.fq.gz
 SEQ002,SAMPLE_B,/path/to/sampleB_R1.fq.gz,/path/to/sampleB_R2.fq.gz
 ```
+
+### SLURM Script Snippet
+```bash
+# After fastp finishes, remove raw FASTQ files to save space
+# If you need to keep raw FASTQ, comment out the following lines:
+rm "$IN1"
+rm "$IN2"
+```
+
 ### SLURM Script Example
 ```bash
 #!/bin/bash

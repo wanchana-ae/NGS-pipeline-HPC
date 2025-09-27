@@ -43,6 +43,8 @@ fastp -i "$IN1" -I "$IN2" \
 
   md5sum ${OUT_trim}${OUT1} > ${OUT_trim}${SAMPLE_ID}.md5
 	md5sum ${OUT_trim}${OUT2} >> ${OUT_trim}${SAMPLE_ID}.md5
+# After fastp finishes, remove raw FASTQ files to save space
+# If you need to keep raw FASTQ, comment out the following lines:
  rm "$IN1"
  rm "$IN2"
  
