@@ -4,6 +4,7 @@ This repository contains high-performance computing (HPC) pipelines for processi
 
 1. **FASTQ preprocessing using `fastp`**
 2. **Alignment and post-processing using `Bowtie2` and `Picard`**
+3. **Variant calling using `GATK HaplotypeCaller`**
 
 ---
 ## 0. Prepare Bowtie2 Index
@@ -98,15 +99,70 @@ IN2="${OUT_TRIMED}${SAMPLE_ID}_2.fastq"
 sbatch submit_bowtie2_array.sh
 ```
 
+## 3. Variant Calling with GATK HaplotypeCaller
+
+### Metadata File Format
+- Can use the same metadata.txt as for fastp, e.g.:
+```
+SEQ001,SAMPLE_A
+SEQ002,SAMPLE_B
+```
+
+### SLURM Script Example
+```bash
+#!/bin/bash
+#SBATCH --job-name=haplotypecaller
+#SBATCH --array=1-50
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=16G
+#SBATCH --output=/path/to/log/haplotypecaller_%A_%a.log
+#SBATCH --nodelist=compute-02
+
+ml load gatk
+
+# Paths
+
+IN_DIR_MAPPED="/path/to/Mapped/"
+OUT_DIR_GVCF="/path/to/GVCF/"
+REFERENCE="/path/to/Ref/NDDB_SH_1_chr.fasta"
+
+INFO_FILE="metadata.txt"
+
+mkdir -p ${OUT_DIR_GVCF}
+
+# Read sample information
+LINE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" $INFO_FILE)
+SAMPLE_ID=$(echo ${LINE} | cut -d"," -f2)
+IN_BAM="${IN_DIR_MAPPED}${SAMPLE_ID}_MD.bam"
+OUT_GVCF="${OUT_DIR_GVCF}${SAMPLE_ID}.g.vcf.gz"
+
+# Run HaplotypeCaller pipeline...
+gatk --java-options "-Xmx16G" HaplotypeCaller \
+    -R ${REFERENCE} \
+    -I ${IN_BAM} \
+    -O ${OUT_GVCF} \
+    -ERC GVCF \
+    --native-pair-hmm-threads 8 \
+    2>&1 | tee -a ${OUT_DIR_GVCF}${SAMPLE_ID}_haplotypecaller.log
+md5sum ${OUT_GVCF} > ${OUT_GVCF}.md5
+```
+### Usage
+1. Edit metadata.txt to include your sample information.
+2. Submit the SLURM job array:
+```bash
+sbatch submit_haplotypecaller_array.sh
+```
 ### Requirements
 - SLURM workload manager
 - fastp
 - bowtie2
 - picard
 - samtools
+- gatk
 - Module environment (ml load) or conda/mamba installation
 
 ### Notes
 - Ensure output directories exist and have sufficient storage.
-- Intermediate files are removed automatically; final BAM files are preserved.
+- Intermediate files are removed automatically; final BAM and GVCF files are preserved.
 - MD5 checksums are generated for all final files to verify integrity.
