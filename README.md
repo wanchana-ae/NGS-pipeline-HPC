@@ -87,7 +87,27 @@ sequencing_id,sample_id,read1.fastq.gz,read2.fastq.gz
 SEQ001,SAMPLE_A,/path/to/sampleA_R1.fq.gz,/path/to/sampleA_R2.fq.gz
 SEQ002,SAMPLE_B,/path/to/sampleB_R1.fq.gz,/path/to/sampleB_R2.fq.gz
 ```
+### SLURM Script Example
+```bash
+#!/bin/bash
+#SBATCH --job-name=fastp_array
+#SBATCH --array=1-49           # Distribute 16 jobs (8 jobs per node)
+#SBATCH --ntasks=1            # Use 16 tasks
+#SBATCH --cpus-per-task=8      # Use 4 cores per sample
+#SBATCH --mem=16G               # Allocate 4GB RAM per sample (4GB * 32 = 128GB)
+#SBATCH --output=/path/to/log/fastp_%A_%a.log
 
+ml load fastp
+
+# Paths
+
+# Read input file (sequencing ID, sample ID, seq_1.fq.gz, seq_2.fq.gz)
+INPUT_FILE="metadata.txt"
+OUT_trim="/path/to/TrimmedFastq/"
+LINE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" $INPUT_FILE)
+
+# Run FASTQ Preprocessing pipeline...
+```
 ### Usage
 1. Edit metadata.csv to include your sample information.
 2. Submit the SLURM job array:
