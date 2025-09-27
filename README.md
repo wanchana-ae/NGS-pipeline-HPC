@@ -91,10 +91,10 @@ SEQ002,SAMPLE_B,/path/to/sampleB_R1.fq.gz,/path/to/sampleB_R2.fq.gz
 ```bash
 #!/bin/bash
 #SBATCH --job-name=fastp_array
-#SBATCH --array=1-50           # Distribute 16 jobs (8 jobs per node)
-#SBATCH --ntasks=1            # Use 16 tasks
-#SBATCH --cpus-per-task=8      # Use 4 cores per sample
-#SBATCH --mem=16G               # Allocate 4GB RAM per sample (4GB * 32 = 128GB)
+#SBATCH --array=1-50           # Distribute 50 jobs
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8      # Use 8 cores per sample
+#SBATCH --mem=16G               # Allocate 16GB RAM per sample
 #SBATCH --output=/path/to/log/fastp_%A_%a.log
 
 ml load fastp
@@ -137,7 +137,7 @@ SEQ002,SAMPLE_B
 #SBATCH --array=1-50
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --nodelist=compute-02
+#SBATCH --nodelist=compute-02  #Set to use compute-02 node only  
 #SBATCH --output /path/to/log/bowtie2_%A_%a.log
 
 ml load bowtie2
