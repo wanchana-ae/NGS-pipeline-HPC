@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=fastp_array
-#SBATCH --array=1-49           # Distribute 16 jobs (8 jobs per node)
+#SBATCH --array=1-50           # Distribute 16 jobs (8 jobs per node)
 #SBATCH --ntasks=1            # Use 16 tasks
 #SBATCH --cpus-per-task=8      # Use 4 cores per sample
 #SBATCH --mem=16G               # Allocate 4GB RAM per sample (4GB * 32 = 128GB)

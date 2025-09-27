@@ -91,7 +91,7 @@ SEQ002,SAMPLE_B,/path/to/sampleB_R1.fq.gz,/path/to/sampleB_R2.fq.gz
 ```bash
 #!/bin/bash
 #SBATCH --job-name=fastp_array
-#SBATCH --array=1-49           # Distribute 16 jobs (8 jobs per node)
+#SBATCH --array=1-50           # Distribute 16 jobs (8 jobs per node)
 #SBATCH --ntasks=1            # Use 16 tasks
 #SBATCH --cpus-per-task=8      # Use 4 cores per sample
 #SBATCH --mem=16G               # Allocate 4GB RAM per sample (4GB * 32 = 128GB)
@@ -237,3 +237,8 @@ sbatch submit_haplotypecaller_array.sh
 - Ensure output directories exist and have sufficient storage.
 - Intermediate files are removed automatically; final BAM and GVCF files are preserved.
 - MD5 checksums are generated for all final files to verify integrity.
+
+### Data Sources
+
+- Si, J., Dai, D., Gorkhali, N. A., Wang, M., Wang, S., Sapkota, S., Kadel, R. C., Sadaula, A., Dhakal, A., Faruque, M. O., Omar, A. I., Sari, E. M., Ashari, H., Dagong, M. I. A., Yindee, M., Rushdi, H. E., Elregalaty, H., Amin, A., Radwan, M. A., Pham, L. D., Hulugalla, W. M. M. P., Silva, G. L. L. P., Zheng, W., Mansoor, S., Ali, M. B., Vahidi, F., Al-Bayatti, S. A., Pauciullo, A., Lenstra, J. A., Barker, J. S. F., Fang, L., Wu, D. D., Han, J., & Zhang, Y. (2025). Complete Genomic Landscape Reveals Hidden Evolutionary History and Selection Signature in Asian Water Buffaloes (Bubalus bubalis). *Advanced Science*. https://doi.org/10.1002/advs.202407615
+
