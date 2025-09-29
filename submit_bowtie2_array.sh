@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --nodelist=compute-02
 #SBATCH --output /data/home/wanchana/Water_Buffaloes/Call_SNP/log/bowtie2_%A_%a.log
-
+set -euo pipefail
 ml load bowtie2
 ml load picard
 ml load samtools

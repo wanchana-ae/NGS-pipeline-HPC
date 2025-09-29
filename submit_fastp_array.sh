@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8      # Use 4 cores per sample
 #SBATCH --mem=16G               # Allocate 4GB RAM per sample (4GB * 32 = 128GB)
 #SBATCH --output=/data/home/wanchana/Water_Buffaloes/Call_SNP/log/fastp_%A_%a.log
-
+set -euo pipefail
 ml load fastp
 
 # Read input file (sequencing ID, sample ID, seq_1.fq.gz, seq_2.fq.gz)

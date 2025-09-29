@@ -6,7 +6,7 @@
 #SBATCH --mem=16G
 #SBATCH --output=/data/home/wanchana/Water_Buffaloes/Call_SNP/log/haplotypecaller_%A_%a.log
 #SBATCH --nodelist=compute-02
-
+set -euo pipefail
 ml load gatk
 
 # Set directory paths
