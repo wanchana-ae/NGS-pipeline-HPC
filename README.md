@@ -9,6 +9,7 @@ This repository contains high-performance computing (HPC) pipelines for processi
 ## Workflow Overview
 
 The following diagram shows the full NGS pipeline workflow:
+
 ```
                  ┌───────────────┐
                  │   Raw FASTQ   │
@@ -55,9 +56,15 @@ The following diagram shows the full NGS pipeline workflow:
                  ┌───────────────┐
                  │  GVCF files   │
                  └───────────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │  CombineGVCFs │
+                 └───────────────┘
 ```
 
 ---
+
 ## 0. Prepare Bowtie2 Index
 
 - Before running the alignment pipeline, you need to build a Bowtie2 index for your reference genome.
@@ -67,21 +74,24 @@ The following diagram shows the full NGS pipeline workflow:
 ml load bowtie2
 
 # Paths
-REF_FASTA="/path/to/Ref/NDDB_SH_1_chr.fasta"
-BT2_INDEX="/path/to/Ref/NDDB_SH_1_chr"
+REF_FASTA="/path/to/Ref/REFERENCE.fasta"
+BT2_INDEX="/path/to/Ref/REFERENCE"
 
 # Build index
 bowtie2-build ${REF_FASTA} ${BT2_INDEX}
 ```
+
 ## 1. FASTQ Preprocessing with `fastp`
 
 ### Features
+
 - Parallel processing using SLURM job arrays
 - Generates trimmed FASTQ files and quality reports (HTML & JSON)
 - MD5 checksum validation for data integrity
 - Automatic cleanup of raw FASTQ files to save storage
 
 ### Metadata File Format
+
 ```
 sequencing_id,sample_id,read1.fastq.gz,read2.fastq.gz
 SEQ001,SAMPLE_A,/path/to/sampleA_R1.fq.gz,/path/to/sampleA_R2.fq.gz
@@ -89,8 +99,10 @@ SEQ002,SAMPLE_B,/path/to/sampleB_R1.fq.gz,/path/to/sampleB_R2.fq.gz
 ```
 
 ### SLURM Script Snippet `*** WARNING Please Read ***`
+
 After fastp finishes, remove raw FASTQ files to save space
 If you need to keep raw FASTQ, comment in `submit_fastp_array.sh` file in lines:
+
 ```bash
 rm "$IN1" #This line will remove raw FASTQ
 rm "$IN2" #This line will remove raw FASTQ
@@ -102,6 +114,7 @@ rm "$IN2" #This line will remove raw FASTQ
 ```
 
 ### SLURM Script Example
+
 ```bash
 #!/bin/bash
 #SBATCH --job-name=fastp_array
@@ -122,9 +135,12 @@ LINE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" $INPUT_FILE)
 
 # Run FASTQ Preprocessing pipeline...
 ```
+
 ### Usage
+
 1. Edit metadata.csv to include your sample information.
 2. Submit the SLURM job array:
+
 ```bash
 sbatch submit_fastp_array.sh
 ```
@@ -132,17 +148,21 @@ sbatch submit_fastp_array.sh
 ## 2. Alignment and Post-processing with Bowtie2 + Picard
 
 ### Features
+
 - Align paired-end FASTQ to reference genome using Bowtie2
 - Add read groups, fix mate information, and mark duplicates using Picard
 - Generates BAM files with index and MD5 checksum validation
 - Cleans up intermediate files to save storage
 
 ### Metadata File Format
+
 - Can use the same metadata.txt as for fastp, e.g.:
+
 ```
 SEQ001,SAMPLE_A
 SEQ002,SAMPLE_B
 ```
+
 ### SLURM Script Example
 
 ```bash
@@ -151,7 +171,6 @@ SEQ002,SAMPLE_B
 #SBATCH --array=1-50
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --nodelist=compute-02  #Set to use compute-02 node only  
 #SBATCH --output /path/to/log/bowtie2_%A_%a.log
 
 ml load bowtie2
@@ -161,7 +180,7 @@ ml load samtools
 # Paths
 OUT_MAPPED="/path/to/Mapped/"
 OUT_TRIMED="/path/to/TrimmedFastq/"
-BT2_INDEX="/path/to/Ref/NDDB_SH_1_chr"
+BT2_INDEX="/path/to/Ref/REFERENCE"
 
 mkdir -p ${OUT_MAPPED}
 
@@ -177,9 +196,12 @@ IN2="${OUT_TRIMED}${SAMPLE_ID}_2.fastq"
 # Run Bowtie2 and Picard pipeline...
 
 ```
+
 ### Usage
+
 1. Edit metadata.txt to include your sample information.
 2. Submit the SLURM job array:
+
 ```bash
 sbatch submit_bowtie2_array.sh
 ```
@@ -187,13 +209,16 @@ sbatch submit_bowtie2_array.sh
 ## 3. Variant Calling with GATK HaplotypeCaller
 
 ### Metadata File Format
+
 - Can use the same metadata.txt as for fastp, e.g.:
+
 ```
 SEQ001,SAMPLE_A
 SEQ002,SAMPLE_B
 ```
 
 ### SLURM Script Example
+
 ```bash
 #!/bin/bash
 #SBATCH --job-name=haplotypecaller
@@ -210,7 +235,7 @@ ml load gatk
 
 IN_DIR_MAPPED="/path/to/Mapped/"
 OUT_DIR_GVCF="/path/to/GVCF/"
-REFERENCE="/path/to/Ref/NDDB_SH_1_chr.fasta"
+REFERENCE="/path/to/Ref/REFERENCE.fasta"
 
 INFO_FILE="metadata.txt"
 
@@ -232,13 +257,87 @@ gatk --java-options "-Xmx16G" HaplotypeCaller \
     2>&1 | tee -a ${OUT_DIR_GVCF}${SAMPLE_ID}_haplotypecaller.log
 md5sum ${OUT_GVCF} > ${OUT_GVCF}.md5
 ```
+
 ### Usage
+
 1. Edit metadata.txt to include your sample information.
 2. Submit the SLURM job array:
+
 ```bash
 sbatch submit_haplotypecaller_array.sh
 ```
+
+## 4. Combine Variant Calling file with GATK CombineGVCFs
+
+### Prepare File
+
+- `GVCF_LIST` File contain name and path gvcf from HaplotypeCaller step. e.g.:
+
+```
+/path/to/GVCF/SAMPLE_A.g.vcf.gz
+/path/to/GVCF/SAMPLE_B.g.vcf.gz  
+/path/to/GVCF/SAMPLE_C.g.vcf.gz
+```
+
+Add *.list* to the file name (e.g., example.list)
+
+- `Chr_file` File chrmosome name or genomic intervals over which to operate. e.g.:
+
+```
+1
+2
+3
+4
+...
+```
+
+### SLURM Script Example
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=combine_gvcfs
+#SBATCH --array=1-50
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=64G
+#SBATCH --output=/path/to/log/combine_gvcfs_%A_%a.log
+
+ml load gatk  # Adjust module version as needed
+
+# Paths
+GVCF_LIST="/path/to/GVCF/GVCF.list"
+REFERENCE="/path/to/Ref/REFERENCE.fasta"
+OUT_dir="/path/output/Combine_gvcf/"
+Chr_file="/path/to/chr.list"
+
+# Get line corresponding to SLURM_ARRAY_TASK_ID
+LINE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" $Chr_file)
+Number_chr=$(echo ${LINE} | cut -d"," -f1)
+
+# Run HaplotypeCaller
+echo "CombineGVCFsr for ${Number_chr}"
+
+gatk --java-options "-Xmx64G -XX:ParallelGCThreads=16" CombineGVCFs \
+    -R ${REFERENCE} \
+    --variant ${GVCF_LIST} \
+    -L ${Number_chr} \
+    -O ${OUT_dir}Prefix_output_Chr${Number_chr}.g.vcf.gz 2>&1 | tee -a Prefix_output_Chr${Number_chr}.log
+
+echo "CombineGVCFs completed for ${Number_chr}"
+```
+
+### Usage
+
+1. Edit GVCF.list to include your gvcf information.
+2. Edit chr.list fllow chrmosome name of REFERENCE.fasta.
+3. Submit the SLURM job array:
+
+```bash
+sbatch submit_combine_gvcf_array.sh
+```
+
 ### Requirements
+
 - SLURM workload manager
 - fastp
 - bowtie2
@@ -248,11 +347,7 @@ sbatch submit_haplotypecaller_array.sh
 - Module environment (ml load) or conda/mamba installation
 
 ### Notes
+
 - Ensure output directories exist and have sufficient storage.
 - Intermediate files are removed automatically; final BAM and GVCF files are preserved.
 - MD5 checksums are generated for all final files to verify integrity.
-
-### Data Sources
-
-- Si, J., Dai, D., Gorkhali, N. A., Wang, M., Wang, S., Sapkota, S., Kadel, R. C., Sadaula, A., Dhakal, A., Faruque, M. O., Omar, A. I., Sari, E. M., Ashari, H., Dagong, M. I. A., Yindee, M., Rushdi, H. E., Elregalaty, H., Amin, A., Radwan, M. A., Pham, L. D., Hulugalla, W. M. M. P., Silva, G. L. L. P., Zheng, W., Mansoor, S., Ali, M. B., Vahidi, F., Al-Bayatti, S. A., Pauciullo, A., Lenstra, J. A., Barker, J. S. F., Fang, L., Wu, D. D., Han, J., & Zhang, Y. (2025). Complete Genomic Landscape Reveals Hidden Evolutionary History and Selection Signature in Asian Water Buffaloes (Bubalus bubalis). *Advanced Science*. https://doi.org/10.1002/advs.202407615
-
