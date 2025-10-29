@@ -8,6 +8,8 @@
 
 ml load gatk  # Adjust module version as needed
 
+set -euo pipefail
+
 # Paths
 GVCF_LIST="/data/share/fs6/Vigna_radiata/Germplasm_Ref_Vrad_JL7/GVCF/name_405ea_update_27102025.list"
 REFERENCE="/data/share/fs6/Vigna_radiata/Reference/Vrad_JL7/Vrad_JL7.chr.sort.genome.fa"
