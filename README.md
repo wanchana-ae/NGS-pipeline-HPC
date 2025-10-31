@@ -61,6 +61,18 @@ The following diagram shows the full NGS pipeline workflow:
                  ┌───────────────┐
                  │  CombineGVCFs │
                  └───────────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │Combined GVCF output│
+                 └───────────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │ GenotypeGVCFs │
+                 └───────────────┘
+                 
+                 
 ```
 
 ---
@@ -334,6 +346,60 @@ echo "CombineGVCFs completed for ${Number_chr}"
 
 ```bash
 sbatch submit_combine_gvcf_array.sh
+```
+
+## 5. GATK GenotypeGVCFs to generate VCF files from individual GVCF files
+
+📌 Overview
+
+This script runs GATK GenotypeGVCFs to generate VCF files from individual GVCF files (samples) using a SLURM job array for parallel execution on an HPC cluster.
+
+📝 Input
+
+File: name_gvcf.txt
+A text file listing the full path of each GVCF file, one sample per line, e.g.:
+
+```bash
+/path/to/sample1.g.vcf.gz
+/path/to/sample2.g.vcf.gz
+```
+
+🖥️ SLURM Job Configuration
+
+```bash
+#SBATCH --job-name=Genotype_GVCFs
+#SBATCH --array=1-11              # Number of samples (adjust according to name_gvcf.txt lines)
+#SBATCH --cpus-per-task=16        # CPU cores per job
+#SBATCH --mem=64G                 # Memory per job
+#SBATCH --output=/.../log/GenotypeGVCFs_%A_%a.log
+```
+
+Set path 
+
+- **GVCF_LIST** A text file containing the full path of each .g.vcf.gz file, one per sample.
+- **REFERENCE** The reference genome used for genotyping.
+- **OUT_dir** Directory where output .vcf.gz and .log files will be saved.
+
+```bash
+GVCF_LIST="/path/to/name_gvcf.txt"
+REFERENCE="/path/to/Ref/REFERENCE.fasta"
+OUT_dir="/path/output/VCF/"
+```
+🚀 Running the Script
+
+Load the GATK module and submit the job via SLURM:
+
+```bash
+sbatch Genotype_GVCFs.sh
+```
+
+📤 Output
+
+For each sample, the script produces:
+
+```bash
+VCF/<sample_name>.vcf.gz
+VCF/<sample_name>.log
 ```
 
 ### Requirements
