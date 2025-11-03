@@ -64,15 +64,24 @@ The following diagram shows the full NGS pipeline workflow:
                         │
                         ▼
                  ┌───────────────┐
-                 │Combined GVCF output│
+                 │ Combined GVCF │
                  └───────────────┘
                         │
                         ▼
                  ┌───────────────┐
                  │ GenotypeGVCFs │
                  └───────────────┘
-                 
-                 
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │   VCF files   │
+                 └───────────────┘
+                        │
+                        ▼
+                 ┌───────────────┐
+                 │   GatherVcfs  │
+                 └───────────────┘
+              
 ```
 
 ---
@@ -374,7 +383,7 @@ A text file listing the full path of each GVCF file, one sample per line, e.g.:
 #SBATCH --output=/.../log/GenotypeGVCFs_%A_%a.log
 ```
 
-Set path 
+Set path
 
 - **GVCF_LIST** A text file containing the full path of each .g.vcf.gz file, one per sample.
 - **REFERENCE** The reference genome used for genotyping.
@@ -385,6 +394,7 @@ GVCF_LIST="/path/to/name_gvcf.txt"
 REFERENCE="/path/to/Ref/REFERENCE.fasta"
 OUT_dir="/path/output/VCF/"
 ```
+
 🚀 Running the Script
 
 Load the GATK module and submit the job via SLURM:
@@ -400,6 +410,67 @@ For each sample, the script produces:
 ```bash
 VCF/<sample_name>.vcf.gz
 VCF/<sample_name>.log
+```
+
+## 6.GATK GatherVcfs Pipeline
+
+📘 Overview
+
+This script merges multiple chromosome-level VCF files into a single genome-wide VCF file using
+a tool that concatenates variant files produced by GATK.
+
+```bash
+📂 Directory Structure
+/data/home/wanchana/Coconut/FF68/
+├── log/
+│   └── GatherVcfs_<jobID>.log
+├── VCF/
+│   ├──VCF_Chr1.vcf.gz
+│   ├──VCF_Chr2.vcf.gz
+│   ├── ...
+│   ├──VCF_Chr11.vcf.gz
+│   └──VCF.raw.vcf.gz   # ← final merged output
+└── scripts/
+    └── GatherVcfs.sh
+```
+
+▶️ Running the Job
+
+Submit the job via SLURM:
+
+```bash
+sbatch scripts/GatherVcfs.sh
+```
+
+📥 Input
+
+Multiple per-chromosome .vcf.gz files such as:
+
+```bash
+VCF_Chr1.vcf.gz
+VCF_Chr2.vcf.gz
+...
+VCF_Chr11.vcf.gz
+```
+
+📤 Output
+
+- Merged VCF file:
+
+```bash
+./VCF/Vigina_radiata_405ea.raw.vcf.gz
+```
+
+- GATK log file:
+
+```bash
+./VCF/Vigina_radiata_405ea.log
+```
+
+- SLURM log file:
+
+```bash
+./log/GatherVcfs_<jobID>.log
 ```
 
 ### Requirements
